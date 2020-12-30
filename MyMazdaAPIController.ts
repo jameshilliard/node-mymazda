@@ -64,6 +64,37 @@ interface PermAPIObject {
     version: string
 }
 
+interface TPMSInformation {
+    FLTPrsDispBar: number,
+    MntTyreAtFlg: number,
+    FLTPrsDispKP: number,
+    RLTPrsDispKgfPcm2: number,
+    FLTPrsDispPsi: number,
+    FRTPrsDispPsi: number,
+    FRTPrsDispKgfPcm2: number,
+    RRTPrsDispBar: number,
+    TPrsDispMinute: number,
+    TPrsDispYear: number,
+    RRTPrsDispPsi: number,
+    TPrsDispMonth: number,
+    RLTPrsDispKP: number,
+    RRTyrePressWarn: number,
+    TPMSSystemFlt: number,
+    RLTyrePressWarn: number,
+    RLTPrsDispBar: number,
+    FRTyrePressWarn: number,
+    FLTPrsDispKgfPcm2: number,
+    RRTPrsDispKgfPcm2: number,
+    TPrsDispDate: number,
+    RRTPrsDispKP: number,
+    TPMSStatus: number,
+    FRTPrsDispKP: number,
+    RLTPrsDispPsi: number,
+    FLTyrePressWarn: number,
+    FRTPrsDispBar: number,
+    TPrsDispHour: number
+}
+
 interface VehicleStatusAPIResponse extends APIBaseResponse {
     alertInfos: {
         TnsLight: {
@@ -148,36 +179,7 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
             OdoDispValueMile: number,
             Drv1DrvTm: number
         },
-        TPMSInformation: {
-            FLTPrsDispBar: number,
-            MntTyreAtFlg: number,
-            FLTPrsDispKP: number,
-            RLTPrsDispKgfPcm2: number,
-            FLTPrsDispPsi: number,
-            FRTPrsDispPsi: number,
-            FRTPrsDispKgfPcm2: number,
-            RRTPrsDispBar: number,
-            TPrsDispMinute: number,
-            TPrsDispYear: number,
-            RRTPrsDispPsi: number,
-            TPrsDispMonth: number,
-            RLTPrsDispKP: number,
-            RRTyrePressWarn: number,
-            TPMSSystemFlt: number,
-            RLTyrePressWarn: number,
-            RLTPrsDispBar: number,
-            FRTyrePressWarn: number,
-            FLTPrsDispKgfPcm2: number,
-            RRTPrsDispKgfPcm2: number,
-            TPrsDispDate: number,
-            RRTPrsDispKP: number,
-            TPMSStatus: number,
-            FRTPrsDispKP: number,
-            RLTPrsDispPsi: number,
-            FLTyrePressWarn: number,
-            FRTPrsDispBar: number,
-            TPrsDispHour: number
-        },
+        TPMSInformation: TPMSInformation,
         SeatBeltInformation: {
             FirstRowBuckleDriver: number,
             RLOCSStatDACtl: number,
@@ -226,19 +228,35 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
         },
         WguidStatus: object,
         DcmPositionAccuracyEntity: object
-    }[],
-    resultCode: string
+    }[]
 }
 
-interface VehicleStatus {
-    driverWindowOpen: boolean,
-    passengerWindowOpen: boolean,
-    rearLeftWindowOpen: boolean,
-    rearRightWindowOpen: boolean
-    latitude: number,
-    longitude: number,
-    positionTimestamp: string,
-    lastUpdatedTimestamp: string
+interface HealthReportAPIResponse extends APIBaseResponse {
+    remoteInfos: {
+        WngRearFogLamp: number,
+        WngOilShortage: number,
+        RegularMntInformation: {
+            RemRegDistMile: number,
+            MntSetDistMile: number,
+            MntSetDistKm: number
+        },
+        WngTurnLamp: 0,
+        WngOilAmountExceed: number,
+        TPMSInformation: TPMSInformation,
+        WngTyrePressureLow: number,
+        OdoDispValue: number,
+        WngTailLamp: 0,
+        WngTpmsStatus: 0,
+        WngHeadLamp: 0,
+        WngSmallLamp: 0,
+        WngBreakLamp: 0,
+        OccurrenceDate: string,
+        OilMntInformation: {
+            RemOilDistK: number
+        },
+        OdoDispValueMile: number,
+        WngBackLamp: number
+    }[]
 }
 
 export default class MyMazdaAPIController {
@@ -323,7 +341,7 @@ export default class MyMazdaAPIController {
     }
 
     async getVehicleStatus(internalVin: number) {
-        return await this.connection.apiRequest<VehicleStatusAPIResponse>(true, true, {
+        let response = await this.connection.apiRequest<VehicleStatusAPIResponse>(true, true, {
             url: "remoteServices/getVehicleStatus/v4",
             method: "POST",
             json: {
@@ -334,10 +352,14 @@ export default class MyMazdaAPIController {
                 "vecinfotype": "0"
             }
         });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to get vehicle status");
+
+        return response;
     }
 
     async getHealthReport(internalVin: number) {
-        return await this.connection.apiRequest(true, true, {
+        let response = await this.connection.apiRequest<HealthReportAPIResponse>(true, true, {
             url: "remoteServices/getHealthReport/v4",
             method: "POST",
             json: {
@@ -347,6 +369,10 @@ export default class MyMazdaAPIController {
                 "offset": 0
             }
         });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to get vehicle health report");
+
+        return response;
     }
 
     async doorLock(internalVin: number): Promise<void> {
