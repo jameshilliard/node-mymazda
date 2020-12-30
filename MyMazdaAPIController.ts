@@ -241,7 +241,7 @@ interface VehicleStatus {
     lastUpdatedTimestamp: string
 }
 
-export default class MyMazdaAPIClient {
+export default class MyMazdaAPIController {
     private connection: MyMazdaAPIConnection;
 
     constructor(email: string, password: string) {
@@ -258,7 +258,11 @@ export default class MyMazdaAPIClient {
         return await this.connection.apiRequest(true, false, {
             url: "junction/getLanguagePkg/v4",
             method: "POST",
-            body: `{"platformType":"ANDROID","region":"MNAO","version":"2.0.4"}`
+            json: {
+                "platformType": "ANDROID",
+                "region": "MNAO",
+                "version": "2.0.4"
+            }
         });
     }
 
