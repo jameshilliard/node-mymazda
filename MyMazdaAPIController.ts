@@ -203,7 +203,7 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
             RemainingMileage: number,
             MntSCRAtFlg: number
         },
-        OccurrenceDate: number,
+        OccurrenceDate: string,
         PositionInfo: {
             AcquisitionDatetime: string,
             Latitude: number,
