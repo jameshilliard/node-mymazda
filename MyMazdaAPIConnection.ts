@@ -8,9 +8,9 @@ const IV = "0102030405060708";
 const SIGNATURE_MD5 = "C383D8C4D279B78130AD52DC71D95CAA";
 const APP_PACKAGE_ID = "com.interrait.mymazda";
 const DEVICE_ID = "D9E89AFC-BD3C-309F-A48C-A2A9466DFE9C";
-const USER_AGENT = "MyMazda-Android/7.0.1";
+const USER_AGENT = "MyMazda-Android/7.1.0";
 const APP_OS = "Android";
-const APP_VERSION = "7.0.1";
+const APP_VERSION = "7.1.0";
 
 class AccessTokenError extends Error {
     constructor(message?: string) {
