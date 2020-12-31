@@ -21,6 +21,14 @@ interface LightOffAPIResponse extends APIBaseResponse {
     message: string
 }
 
+interface EngineStartAPIResponse extends APIBaseResponse {
+    message: string
+}
+
+interface EngineStopAPIResponse extends APIBaseResponse {
+    message: string
+}
+
 interface GetVehBaseInfoAPIResponse extends APIBaseResponse {
     vecBaseInfos: {
         Vehicle: {
@@ -421,6 +429,32 @@ export default class MyMazdaAPIController {
     async lightOff(internalVin: number): Promise<void> {
         let response = await this.connection.apiRequest<LightOffAPIResponse>(true, true, {
             url: "remoteServices/lightOff/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error(response.message);
+    }
+
+    async engineStart(internalVin: number): Promise<void> {
+        let response = await this.connection.apiRequest<EngineStartAPIResponse>(true, true, {
+            url: "remoteServices/engineStart/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error(response.message);
+    }
+
+    async engineStop(internalVin: number): Promise<void> {
+        let response = await this.connection.apiRequest<EngineStopAPIResponse>(true, true, {
+            url: "remoteServices/engineStop/v4",
             method: "POST",
             json: {
                 "internaluserid": "__INTERNAL_ID__",
