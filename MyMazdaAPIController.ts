@@ -102,6 +102,10 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
             LightCombiSWMode: number,
             TnsLamp: number
         },
+        HazardLamp: {
+            HazardSw: number
+        },
+        UsbPositionAccuracy: number,
         Pw: {
             /**
              * Rear right window state.
