@@ -360,6 +360,7 @@ export default class MyMazdaAPIConnection {
             throwHttpErrors: false
         });
 
+        if (loginResponse.body.status === "INVALID_CREDENTIAL") throw new Error("Invalid email or password");
         if (loginResponse.body.status === "USER_LOCKED") throw new Error("Account has been locked");
         if (loginResponse.body.status !== "OK") throw new Error("Login failed");
 
