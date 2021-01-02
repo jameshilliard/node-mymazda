@@ -29,7 +29,7 @@ interface EngineStopAPIResponse extends APIBaseResponse {
     message: string
 }
 
-interface GetVehBaseInfoAPIResponse extends APIBaseResponse {
+interface GetVecBaseInfoAPIResponse extends APIBaseResponse {
     vecBaseInfos: {
         Vehicle: {
             handlePosition: string,
@@ -296,8 +296,8 @@ export default class MyMazdaAPIController {
         });
     }
 
-    async getVehBaseInfos(): Promise<GetVehBaseInfoAPIResponse> {
-        return await this.connection.apiRequest<GetVehBaseInfoAPIResponse>(true, true, {
+    async getVecBaseInfos(): Promise<GetVecBaseInfoAPIResponse> {
+        return await this.connection.apiRequest<GetVecBaseInfoAPIResponse>(true, true, {
             url: "remoteServices/getVecBaseInfos/v4",
             method: "POST",
             json: {

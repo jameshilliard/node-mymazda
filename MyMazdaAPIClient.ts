@@ -91,15 +91,15 @@ export default class MyMazdaAPIClient {
     }
 
     async getVehicles(): Promise<Vehicle[]> {
-        let vehBaseInfos = await this.controller.getVehBaseInfos();
+        let vecBaseInfos = await this.controller.getVecBaseInfos();
 
         let vehicles: Vehicle[] = [];
-        for (let vehBaseInfo of vehBaseInfos.vecBaseInfos) {
-            let otherVehInfo: OtherVehicleInformation = JSON.parse(vehBaseInfo.Vehicle.vehicleInformation);
+        for (let vecBaseInfo of vecBaseInfos.vecBaseInfos) {
+            let otherVehInfo: OtherVehicleInformation = JSON.parse(vecBaseInfo.Vehicle.vehicleInformation);
 
             let vehicle: Vehicle = {
-                vin: vehBaseInfo.vin,
-                id: vehBaseInfo.Vehicle.CvInformation.internalVin,
+                vin: vecBaseInfo.vin,
+                id: vecBaseInfo.Vehicle.CvInformation.internalVin,
                 carlineCode: otherVehInfo.OtherInformation.carlineCode,
                 carlineName: otherVehInfo.OtherInformation.carlineName,
                 modelYear: otherVehInfo.OtherInformation.modelYear,
