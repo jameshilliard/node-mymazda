@@ -387,9 +387,9 @@ export default class MyMazdaAPIController {
         return response;
     }
 
-    async doorLock(internalVin: number): Promise<void> {
-        let response = await this.connection.apiRequest<DoorLockAPIResponse>(true, true, {
-            url: "remoteServices/doorLock/v4",
+    async doorUnlock(internalVin: number): Promise<void> {
+        let response = await this.connection.apiRequest<DoorUnlockAPIResponse>(true, true, {
+            url: "remoteServices/doorUnlock/v4",
             method: "POST",
             json: {
                 "internaluserid": "__INTERNAL_ID__",
@@ -400,9 +400,9 @@ export default class MyMazdaAPIController {
         if (response.resultCode !== "200S00") throw new Error(response.message);
     }
 
-    async doorUnlock(internalVin: number): Promise<void> {
-        let response = await this.connection.apiRequest<DoorUnlockAPIResponse>(true, true, {
-            url: "remoteServices/doorUnlock/v4",
+    async doorLock(internalVin: number): Promise<void> {
+        let response = await this.connection.apiRequest<DoorLockAPIResponse>(true, true, {
+            url: "remoteServices/doorLock/v4",
             method: "POST",
             json: {
                 "internaluserid": "__INTERNAL_ID__",

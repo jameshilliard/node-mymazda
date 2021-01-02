@@ -181,11 +181,11 @@ export default class MyMazdaAPIClient {
         await this.controller.doorLock(vehicleId);
     }
 
-    async engineStart(vehicleId: number): Promise<void> {
+    async startEngine(vehicleId: number): Promise<void> {
         await this.controller.engineStart(vehicleId);
     }
 
-    async engineStop(vehicleId: number): Promise<void> {
+    async stopEngine(vehicleId: number): Promise<void> {
         await this.controller.engineStop(vehicleId);
     }
 }
