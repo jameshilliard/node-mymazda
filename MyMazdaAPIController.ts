@@ -29,6 +29,14 @@ interface EngineStopAPIResponse extends APIBaseResponse {
     message: string
 }
 
+interface GetNickNameAPIResponse extends APIBaseResponse {
+    carlineDesc: string
+}
+
+interface UpdateNickNameAPIResponse extends APIBaseResponse {
+    message: string
+}
+
 interface GetVecBaseInfoAPIResponse extends APIBaseResponse {
     vecBaseInfos: {
         Vehicle: {
@@ -463,5 +471,39 @@ export default class MyMazdaAPIController {
         });
 
         if (response.resultCode !== "200S00") throw new Error(response.message);
+    }
+
+    async getNickName(vin: string): Promise<string> {
+        if (vin.length !== 17) throw new Error("Invalid VIN");
+
+        let response = await this.connection.apiRequest<GetNickNameAPIResponse>(true, true, {
+            url: "remoteServices/getNickName/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "vin": vin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to get vehicle nickname");
+
+        return response.carlineDesc;
+    }
+
+    async updateNickName(vin: string, nickName: string): Promise<void> {
+        if (vin.length !== 17) throw new Error("Invalid VIN");
+        if (nickName.length > 20) throw new Error("Nickname is too long");
+
+        let response = await this.connection.apiRequest<UpdateNickNameAPIResponse>(true, true, {
+            url: "remoteServices/updateNickName/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "vin": vin,
+                "vtitle": nickName
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to update vehicle nickname");
     }
 }

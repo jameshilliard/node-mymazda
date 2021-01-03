@@ -3,6 +3,7 @@ import MyMazdaAPIController from "./MyMazdaAPIController";
 interface Vehicle {
     vin: string,
     id: number,
+    nickname: string,
     carlineCode: string,
     carlineName: string,
     modelYear: string,
@@ -97,9 +98,12 @@ export default class MyMazdaAPIClient {
         for (let vecBaseInfo of vecBaseInfos.vecBaseInfos) {
             let otherVehInfo: OtherVehicleInformation = JSON.parse(vecBaseInfo.Vehicle.vehicleInformation);
 
+            let nickname = await this.controller.getNickName(vecBaseInfo.vin);
+
             let vehicle: Vehicle = {
                 vin: vecBaseInfo.vin,
                 id: vecBaseInfo.Vehicle.CvInformation.internalVin,
+                nickname: nickname,
                 carlineCode: otherVehInfo.OtherInformation.carlineCode,
                 carlineName: otherVehInfo.OtherInformation.carlineName,
                 modelYear: otherVehInfo.OtherInformation.modelYear,
