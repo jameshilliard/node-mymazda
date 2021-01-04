@@ -1,4 +1,5 @@
 import got, { Got, OptionsOfJSONResponseBody } from "got";
+import log4js from "log4js";
 
 import CryptoUtils from "./CryptoUtils";
 
@@ -12,6 +13,8 @@ const USER_AGENT = "MyMazda-Android/7.1.0";
 const APP_OS = "Android";
 const APP_VERSION = "7.1.0";
 
+const logger = log4js.getLogger();
+
 class AccessTokenError extends Error {
     constructor(message?: string) {
         super(message);
@@ -22,6 +25,15 @@ class AccessTokenError extends Error {
 }
 
 class APIEncryptionError extends Error {
+    constructor(message?: string) {
+        super(message);
+        // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
+        Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
+        this.name = AccessTokenError.name; // stack traces display correctly now 
+    }
+}
+
+class RateLimitingError extends Error {
     constructor(message?: string) {
         super(message);
         // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
@@ -196,6 +208,8 @@ export default class MyMazdaAPIConnection {
                             throw new APIEncryptionError("Server rejected encrypted request")
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 600002) {
                             throw new AccessTokenError("Token expired");
+                        } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 900500) {
+                            throw new RateLimitingError("Rate limited; please wait and try again")
                         } else {
                             throw new Error("Request failed");
                         }
@@ -286,6 +300,8 @@ export default class MyMazdaAPIConnection {
         if (needsKeys) await this.ensureKeysPresent();
         if (needsAuth) await this.ensureTokenIsValid();
 
+        logger.debug(`Sending ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
+
         let gotOptionsWithToken = { ...gotOptions, headers: { ...gotOptions.headers, "access-token": needsAuth ? this.accessToken : undefined } };
 
         try {
@@ -293,11 +309,15 @@ export default class MyMazdaAPIConnection {
             return response.body;
         } catch (err) {
             if (err instanceof APIEncryptionError) {
+                logger.debug("Server reports request was not encrypted properly. Retrieving new encryption keys.")
                 await this.retrieveKeys();
+                logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
                 let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
                 return response.body;
             } else if (err instanceof AccessTokenError) {
+                logger.debug("Server reports access token was expired. Retrieving new access token.")
                 await this.login();
+                logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
                 let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
                 return response.body;
             } else {
@@ -319,16 +339,23 @@ export default class MyMazdaAPIConnection {
     }
 
     private async retrieveKeys() {
+        logger.debug("Retrieving encryption keys");
+
         let responseObj = await this.apiRequest<CheckVersionAPIResponse>(false, false, {
             url: "service/checkVersion",
             method: "POST"
         });
+
+        logger.debug("Successfully retrieved encryption keys");
 
         this.encKey = responseObj.encKey;
         this.signKey = responseObj.signKey;
     }
 
     async login() {
+        logger.debug("Logging in");
+        logger.debug("Retrieving public key to encrypt password")
+
         let encryptionKeyResponse = await got<UsherAPIEncryptionKeyResponse>({
             url: "https://ptznwbh8.mazda.com/appapi/v1/system/encryptionKey?appId=MazdaApp&locale=en-US&deviceId=ACCT1195961580&sdkVersion=11.2.0000.002",
             responseType: "json",
@@ -340,6 +367,8 @@ export default class MyMazdaAPIConnection {
         let publicKey = encryptionKeyResponse.body.data.publicKey;
         let encryptedPassword = this.encryptPasswordWithPublicKey(this.password, publicKey);
         let versionPrefix = encryptionKeyResponse.body.data.versionPrefix;
+
+        logger.debug("Sending login request")
 
         let loginResponse = await got<UsherAPILoginResponse>({
             url: "https://ptznwbh8.mazda.com/appapi/v1/user/login",
@@ -359,6 +388,8 @@ export default class MyMazdaAPIConnection {
             responseType: "json",
             throwHttpErrors: false
         });
+
+        logger.debug("Successfully logged in")
 
         if (loginResponse.body.status === "INVALID_CREDENTIAL") throw new Error("Invalid email or password");
         if (loginResponse.body.status === "USER_LOCKED") throw new Error("Account has been locked");
