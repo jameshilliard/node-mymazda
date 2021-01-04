@@ -15,33 +15,6 @@ const APP_VERSION = "7.1.0";
 
 const logger = log4js.getLogger();
 
-class AccessTokenError extends Error {
-    constructor(message?: string) {
-        super(message);
-        // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
-        Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
-        this.name = AccessTokenError.name; // stack traces display correctly now 
-    }
-}
-
-class APIEncryptionError extends Error {
-    constructor(message?: string) {
-        super(message);
-        // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
-        Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
-        this.name = AccessTokenError.name; // stack traces display correctly now 
-    }
-}
-
-class RateLimitingError extends Error {
-    constructor(message?: string) {
-        super(message);
-        // see: typescriptlang.org/docs/handbook/release-notes/typescript-2-2.html
-        Object.setPrototypeOf(this, new.target.prototype); // restore prototype chain
-        this.name = AccessTokenError.name; // stack traces display correctly now 
-    }
-}
-
 interface BaseEncryptedAPIResponse {
     state: string,
     errorCode?: number
@@ -205,11 +178,11 @@ export default class MyMazdaAPIConnection {
                             }
                             return response;
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 600001) {
-                            throw new APIEncryptionError("Server rejected encrypted request")
+                            throw new Error("API_ENCRYPTION_ERROR: Server rejected encrypted request")
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 600002) {
-                            throw new AccessTokenError("Token expired");
+                            throw new Error("ACCESS_TOKEN_EXPIRED_ERROR: Access token expired");
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 900500) {
-                            throw new RateLimitingError("Rate limited; please wait and try again")
+                            throw new Error("RATE_LIMITING_ERROR: Rate limited; please wait and try again")
                         } else {
                             throw new Error("Request failed");
                         }
@@ -308,16 +281,24 @@ export default class MyMazdaAPIConnection {
             let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
             return response.body;
         } catch (err) {
-            if (err instanceof APIEncryptionError) {
+            if (typeof err.message === "string" && err.message.includes("API_ENCRYPTION_ERROR")) {
                 logger.debug("Server reports request was not encrypted properly. Retrieving new encryption keys.")
+
                 await this.retrieveKeys();
+
                 logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
+
                 let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
                 return response.body;
-            } else if (err instanceof AccessTokenError) {
+            } else if (typeof err.message === "string" && err.message.includes("ACCESS_TOKEN_EXPIRED_ERROR")) {
                 logger.debug("Server reports access token was expired. Retrieving new access token.")
+
                 await this.login();
+
                 logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
+
+                gotOptionsWithToken = { ...gotOptions, headers: { ...gotOptions.headers, "access-token": needsAuth ? this.accessToken : undefined } };
+
                 let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
                 return response.body;
             } else {
