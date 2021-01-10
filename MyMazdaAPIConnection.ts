@@ -9,7 +9,8 @@ const IV = "0102030405060708";
 const SIGNATURE_MD5 = "C383D8C4D279B78130AD52DC71D95CAA";
 const APP_PACKAGE_ID = "com.interrait.mymazda";
 const DEVICE_ID = "D9E89AFC-BD3C-309F-A48C-A2A9466DFE9C";
-const USER_AGENT = "MyMazda-Android/7.1.0";
+const USER_AGENT_BASE_API = "MyMazda-Android/7.1.0";
+const USER_AGENT_USHER_API = "MyMazda/7.1.0 (Google Pixel 3a; Android 11)"
 const APP_OS = "Android";
 const APP_VERSION = "7.1.0";
 
@@ -119,7 +120,7 @@ export default class MyMazdaAPIConnection {
                 "device-id": DEVICE_ID,
                 "app-code": APP_CODE,
                 "app-os": APP_OS,
-                "user-agent": USER_AGENT,
+                "user-agent": USER_AGENT_BASE_API,
                 "app-version": APP_VERSION,
                 "app-unique-id": APP_PACKAGE_ID,
                 "region": "us",
@@ -332,14 +333,24 @@ export default class MyMazdaAPIConnection {
     }
 
     async login() {
-        logger.debug("Logging in");
-        logger.debug("Retrieving public key to encrypt password")
+        logger.debug(`Logging in as ${this.email}`);
+        logger.debug("Retrieving public key to encrypt password");
 
-        let encryptionKeyResponse = await got<UsherAPIEncryptionKeyResponse>({
-            url: "https://ptznwbh8.mazda.com/appapi/v1/system/encryptionKey?appId=MazdaApp&locale=en-US&deviceId=ACCT1195961580&sdkVersion=11.2.0000.002",
+        let gotClientUsher = got.extend({
+            prefixUrl: "https://ptznwbh8.mazda.com/appapi/v1/",
             responseType: "json",
             headers: {
-                "User-Agent": "MyMazda/7.0.1 (Google Pixel 3a; Android 11)"
+                "User-Agent": USER_AGENT_USHER_API
+            }
+        });
+
+        let encryptionKeyResponse = await gotClientUsher<UsherAPIEncryptionKeyResponse>({
+            url: "system/encryptionKey",
+            searchParams: {
+                "appId": "MazdaApp",
+                "locale": "en-US",
+                "deviceId": "ACCT1195961580",
+                "sdkVersion": "11.2.0000.002"
             }
         });
 
@@ -349,12 +360,9 @@ export default class MyMazdaAPIConnection {
 
         logger.debug("Sending login request")
 
-        let loginResponse = await got<UsherAPILoginResponse>({
-            url: "https://ptznwbh8.mazda.com/appapi/v1/user/login",
+        let loginResponse = await gotClientUsher<UsherAPILoginResponse>({
+            url: "user/login",
             method: "POST",
-            headers: {
-                "User-Agent": "MyMazda/7.0.1 (Google Pixel 3a; Android 11)"
-            },
             json: {
                 "appId": "MazdaApp",
                 "deviceId": "ACCT1195961580",
@@ -364,15 +372,14 @@ export default class MyMazdaAPIConnection {
                 "userId": this.email,
                 "userIdType": "email"
             },
-            responseType: "json",
             throwHttpErrors: false
         });
-
-        logger.debug("Successfully logged in")
 
         if (loginResponse.body.status === "INVALID_CREDENTIAL") throw new Error("Invalid email or password");
         if (loginResponse.body.status === "USER_LOCKED") throw new Error("Account has been locked");
         if (loginResponse.body.status !== "OK") throw new Error("Login failed");
+
+        logger.debug(`Successfully logged in as ${this.email}`);
 
         this.accessToken = loginResponse.body.data.accessToken;
         this.accessTokenExpirationTs = loginResponse.body.data.accessTokenExpirationTs;
