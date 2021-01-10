@@ -13,6 +13,8 @@ const USER_AGENT = "MyMazda-Android/7.1.0";
 const APP_OS = "Android";
 const APP_VERSION = "7.1.0";
 
+const MAX_RETRIES = 4;
+
 const logger = log4js.getLogger();
 
 interface BaseEncryptedAPIResponse {
@@ -270,10 +272,16 @@ export default class MyMazdaAPIConnection {
     }
 
     async apiRequest<ResponseType>(needsKeys: boolean, needsAuth: boolean, gotOptions: OptionsOfJSONResponseBody): Promise<ResponseType> {
+        return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, 0);
+    }
+
+    async apiRequestRetry<ResponseType>(needsKeys: boolean, needsAuth: boolean, gotOptions: OptionsOfJSONResponseBody, numRetries: number): Promise<ResponseType> {
+        if (numRetries > MAX_RETRIES) throw new Error(`Reached maximum number of retries for ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
+
         if (needsKeys) await this.ensureKeysPresent();
         if (needsAuth) await this.ensureTokenIsValid();
 
-        logger.debug(`Sending ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
+        logger.debug(`Sending ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}${(numRetries > 0) ? ` - attempt #${numRetries + 1}` : ""}`);
 
         let gotOptionsWithToken = { ...gotOptions, headers: { ...gotOptions.headers, "access-token": needsAuth ? this.accessToken : undefined } };
 
@@ -283,24 +291,14 @@ export default class MyMazdaAPIConnection {
         } catch (err) {
             if (typeof err.message === "string" && err.message.includes("API_ENCRYPTION_ERROR")) {
                 logger.debug("Server reports request was not encrypted properly. Retrieving new encryption keys.")
-
                 await this.retrieveKeys();
 
-                logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
-
-                let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
-                return response.body;
+                return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
             } else if (typeof err.message === "string" && err.message.includes("ACCESS_TOKEN_EXPIRED_ERROR")) {
                 logger.debug("Server reports access token was expired. Retrieving new access token.")
-
                 await this.login();
 
-                logger.debug(`Retrying ${"method" in gotOptions ? gotOptions.method : "GET"} request to ${gotOptions.url}`);
-
-                gotOptionsWithToken = { ...gotOptions, headers: { ...gotOptions.headers, "access-token": needsAuth ? this.accessToken : undefined } };
-
-                let response = await this.gotClient<ResponseType>(gotOptionsWithToken);
-                return response.body;
+                return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
             } else {
                 throw err;
             }
