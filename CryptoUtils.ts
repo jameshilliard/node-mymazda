@@ -30,4 +30,15 @@ export default class CryptoUtils {
             padding: crypto.constants.RSA_PKCS1_PADDING
         }, data);
     }
+
+    static generateUuidFromSeed(seed: string): string {
+        let hash = this.sha256(seed).toUpperCase();
+        return `${hash.substring(0, 8)}-${hash.substring(8, 12)}-${hash.substring(12, 16)}-${hash.substring(16, 20)}-${hash.substring(20, 32)}`;
+    }
+
+    static generateUsherDeviceIDFromSeed(seed: string): string {
+        let hash = this.sha256(seed).toUpperCase();
+        let id = parseInt(hash.substring(0, 8), 16);
+        return `ACCT${id}`;
+    }
 }

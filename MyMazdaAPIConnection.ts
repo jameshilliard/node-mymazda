@@ -5,12 +5,12 @@ import CryptoUtils from "./CryptoUtils";
 
 const APP_CODE = "202007270941270111799";
 const BASE_URL = "https://0cxo7m58.mazda.com/prod/";
+const USHER_URL = "https://ptznwbh8.mazda.com/appapi/v1/";
 const IV = "0102030405060708";
 const SIGNATURE_MD5 = "C383D8C4D279B78130AD52DC71D95CAA";
 const APP_PACKAGE_ID = "com.interrait.mymazda";
-const DEVICE_ID = "D9E89AFC-BD3C-309F-A48C-A2A9466DFE9C";
 const USER_AGENT_BASE_API = "MyMazda-Android/7.1.0";
-const USER_AGENT_USHER_API = "MyMazda/7.1.0 (Google Pixel 3a; Android 11)"
+const USER_AGENT_USHER_API = "MyMazda/7.1.0 (Google Pixel 3a; Android 11)";
 const APP_OS = "Android";
 const APP_VERSION = "7.1.0";
 
@@ -101,23 +101,30 @@ function isURLSearchParams(obj: object): obj is URLSearchParams {
 }
 
 export default class MyMazdaAPIConnection {
+    private email: string;
+    private password: string;
+    private baseAPIDeviceID: string;
+    private usherAPIDeviceID: string;
+
     private encKey?: string;
     private signKey?: string;
     private gotClient: Got;
     private accessToken?: string;
     private accessTokenExpirationTs?: number;
 
-    private email: string;
-    private password: string;
-
     constructor(email: string, password: string) {
         this.email = email;
         this.password = password;
 
+        this.baseAPIDeviceID = CryptoUtils.generateUuidFromSeed(email);
+        console.log(this.baseAPIDeviceID);
+        this.usherAPIDeviceID = CryptoUtils.generateUsherDeviceIDFromSeed(email);
+        console.log(this.usherAPIDeviceID);
+
         this.gotClient = got.extend({
             prefixUrl: BASE_URL,
             headers: {
-                "device-id": DEVICE_ID,
+                "device-id": this.baseAPIDeviceID,
                 "app-code": APP_CODE,
                 "app-os": APP_OS,
                 "user-agent": USER_AGENT_BASE_API,
@@ -337,7 +344,7 @@ export default class MyMazdaAPIConnection {
         logger.debug("Retrieving public key to encrypt password");
 
         let gotClientUsher = got.extend({
-            prefixUrl: "https://ptznwbh8.mazda.com/appapi/v1/",
+            prefixUrl: USHER_URL,
             responseType: "json",
             headers: {
                 "User-Agent": USER_AGENT_USHER_API
@@ -349,7 +356,7 @@ export default class MyMazdaAPIConnection {
             searchParams: {
                 "appId": "MazdaApp",
                 "locale": "en-US",
-                "deviceId": "ACCT1195961580",
+                "deviceId": this.usherAPIDeviceID,
                 "sdkVersion": "11.2.0000.002"
             }
         });
@@ -365,7 +372,7 @@ export default class MyMazdaAPIConnection {
             method: "POST",
             json: {
                 "appId": "MazdaApp",
-                "deviceId": "ACCT1195961580",
+                "deviceId": this.usherAPIDeviceID,
                 "locale": "en-US",
                 "password": `${versionPrefix}${encryptedPassword}`,
                 "sdkVersion": "11.2.0000.002",
