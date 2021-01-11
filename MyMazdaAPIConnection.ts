@@ -117,9 +117,7 @@ export default class MyMazdaAPIConnection {
         this.password = password;
 
         this.baseAPIDeviceID = CryptoUtils.generateUuidFromSeed(email);
-        console.log(this.baseAPIDeviceID);
         this.usherAPIDeviceID = CryptoUtils.generateUsherDeviceIDFromSeed(email);
-        console.log(this.usherAPIDeviceID);
 
         this.gotClient = got.extend({
             prefixUrl: BASE_URL,
