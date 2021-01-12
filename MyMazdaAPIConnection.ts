@@ -9,10 +9,11 @@ const USHER_URL = "https://ptznwbh8.mazda.com/appapi/v1/";
 const IV = "0102030405060708";
 const SIGNATURE_MD5 = "C383D8C4D279B78130AD52DC71D95CAA";
 const APP_PACKAGE_ID = "com.interrait.mymazda";
-const USER_AGENT_BASE_API = "MyMazda-Android/7.1.0";
-const USER_AGENT_USHER_API = "MyMazda/7.1.0 (Google Pixel 3a; Android 11)";
+const USER_AGENT_BASE_API = "MyMazda-Android/7.2.0";
+const USER_AGENT_USHER_API = "MyMazda/7.2.0 (Google Pixel 3a; Android 11)";
 const APP_OS = "Android";
-const APP_VERSION = "7.1.0";
+const APP_VERSION = "7.2.0";
+const USHER_SDK_VERSION = "11.2.0000.002";
 
 const MAX_RETRIES = 4;
 
@@ -355,7 +356,7 @@ export default class MyMazdaAPIConnection {
                 "appId": "MazdaApp",
                 "locale": "en-US",
                 "deviceId": this.usherAPIDeviceID,
-                "sdkVersion": "11.2.0000.002"
+                "sdkVersion": USHER_SDK_VERSION
             }
         });
 
@@ -373,7 +374,7 @@ export default class MyMazdaAPIConnection {
                 "deviceId": this.usherAPIDeviceID,
                 "locale": "en-US",
                 "password": `${versionPrefix}${encryptedPassword}`,
-                "sdkVersion": "11.2.0000.002",
+                "sdkVersion": USHER_SDK_VERSION,
                 "userId": this.email,
                 "userIdType": "email"
             },
