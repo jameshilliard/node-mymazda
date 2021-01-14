@@ -3,9 +3,32 @@ import log4js from "log4js";
 
 import CryptoUtils from "./CryptoUtils";
 
-const APP_CODE = "202007270941270111799";
-const BASE_URL = "https://0cxo7m58.mazda.com/prod/";
-const USHER_URL = "https://ptznwbh8.mazda.com/appapi/v1/";
+export type RegionCode = "MNAO" | "MME" | "MJO";
+
+type RegionConfig = Record<RegionCode, {
+    appCode: string,
+    baseUrl: string,
+    usherUrl: string
+}>
+
+const REGION_CONFIG: RegionConfig = {
+    "MNAO": {
+        appCode: "202007270941270111799",
+        baseUrl: "https://0cxo7m58.mazda.com/prod/",
+        usherUrl: "https://ptznwbh8.mazda.com/appapi/v1/"
+    },
+    "MME": {
+        appCode: "202008100250281064816",
+        baseUrl: "https://e9stj7g7.mazda.com/prod/",
+        usherUrl: "https://rz97suam.mazda.com/appapi/v1/"
+    },
+    "MJO": {
+        appCode: "202009170613074283422",
+        baseUrl: "https://wcs9p6wj.mazda.com/prod/",
+        usherUrl: "https://c5ulfwxr.mazda.com/appapi/v1/"
+    }
+};
+
 const IV = "0102030405060708";
 const SIGNATURE_MD5 = "C383D8C4D279B78130AD52DC71D95CAA";
 const APP_PACKAGE_ID = "com.interrait.mymazda";
@@ -107,32 +130,42 @@ export default class MyMazdaAPIConnection {
     private baseAPIDeviceID: string;
     private usherAPIDeviceID: string;
 
+    private appCode: string;
+    private baseUrl: string;
+    private usherUrl: string;
+
     private encKey?: string;
     private signKey?: string;
     private gotClient: Got;
     private accessToken?: string;
     private accessTokenExpirationTs?: number;
 
-    constructor(email: string, password: string) {
+    constructor(email: string, password: string, region: RegionCode) {
         this.email = email;
         this.password = password;
+
+        if (region in REGION_CONFIG) {
+            let regionConfig = REGION_CONFIG[region];
+            this.appCode = regionConfig.appCode;
+            this.baseUrl = regionConfig.baseUrl;
+            this.usherUrl = regionConfig.usherUrl;
+        } else {
+            throw new Error("Invalid region");
+        }
 
         this.baseAPIDeviceID = CryptoUtils.generateUuidFromSeed(email);
         this.usherAPIDeviceID = CryptoUtils.generateUsherDeviceIDFromSeed(email);
 
         this.gotClient = got.extend({
-            prefixUrl: BASE_URL,
+            prefixUrl: this.baseUrl,
             headers: {
                 "device-id": this.baseAPIDeviceID,
-                "app-code": APP_CODE,
+                "app-code": this.appCode,
                 "app-os": APP_OS,
                 "user-agent": USER_AGENT_BASE_API,
                 "app-version": APP_VERSION,
                 "app-unique-id": APP_PACKAGE_ID,
-                "region": "us",
                 "access-token": "",
-                "language": "en-US",
-                "locale": "en-US",
                 "X-acf-sensor-data": ""
             },
             responseType: "json",
@@ -220,7 +253,7 @@ export default class MyMazdaAPIConnection {
 
     //a19e6e2de0e07d4a
     private getDecryptionKeyFromAppCode(): string {
-        let val = CryptoUtils.md5(CryptoUtils.md5(APP_CODE + APP_PACKAGE_ID).toUpperCase() + SIGNATURE_MD5).toLowerCase();
+        let val = CryptoUtils.md5(CryptoUtils.md5(this.appCode + APP_PACKAGE_ID).toUpperCase() + SIGNATURE_MD5).toLowerCase();
         return val.substring(4, 20);
     }
 
@@ -232,7 +265,7 @@ export default class MyMazdaAPIConnection {
     private getSignFromTimestamp(timestamp: string): string {
         if (typeof timestamp !== "string" || timestamp === "") return "";
         let timestampExtended = (timestamp + timestamp.substring(6) + timestamp.substring(3)).toUpperCase();
-        let temporarySignKey = this.getTemporarySignKeyFromAppCode(APP_CODE);
+        let temporarySignKey = this.getTemporarySignKeyFromAppCode(this.appCode);
         return this.getPayloadSign(timestampExtended, temporarySignKey);
     }
 
@@ -343,7 +376,7 @@ export default class MyMazdaAPIConnection {
         logger.debug("Retrieving public key to encrypt password");
 
         let gotClientUsher = got.extend({
-            prefixUrl: USHER_URL,
+            prefixUrl: this.usherUrl,
             responseType: "json",
             headers: {
                 "User-Agent": USER_AGENT_USHER_API

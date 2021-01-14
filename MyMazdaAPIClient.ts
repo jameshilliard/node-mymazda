@@ -1,3 +1,4 @@
+import type { RegionCode } from "./MyMazdaAPIConnection";
 import MyMazdaAPIController from "./MyMazdaAPIController";
 
 interface Vehicle {
@@ -87,8 +88,8 @@ interface VehicleStatus {
 export default class MyMazdaAPIClient {
     private controller: MyMazdaAPIController
 
-    constructor(email: string, password: string) {
-        this.controller = new MyMazdaAPIController(email, password);
+    constructor(email: string, password: string, region: RegionCode) {
+        this.controller = new MyMazdaAPIController(email, password, region);
     }
 
     async getVehicles(): Promise<Vehicle[]> {

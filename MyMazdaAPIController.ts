@@ -1,4 +1,5 @@
 import MyMazdaAPIConnection from "./MyMazdaAPIConnection";
+import type { RegionCode } from "./MyMazdaAPIConnection";
 
 interface APIBaseResponse {
     resultCode: string,
@@ -282,8 +283,8 @@ interface HealthReportAPIResponse extends APIBaseResponse {
 export default class MyMazdaAPIController {
     private connection: MyMazdaAPIConnection;
 
-    constructor(email: string, password: string) {
-        this.connection = new MyMazdaAPIConnection(email, password);
+    constructor(email: string, password: string, region: RegionCode) {
+        this.connection = new MyMazdaAPIConnection(email, password, region);
     }
 
     async getTac() {
@@ -329,6 +330,13 @@ export default class MyMazdaAPIController {
                 "location": `${lat},${lon}`,
                 "language": "en"
             }
+        });
+    }
+
+    // This request only works for Europe region
+    async getCountryNscMapping() {
+        return await this.connection.apiRequest(true, false, {
+            url: "miox/getCountryNscMapping/v4"
         });
     }
 
