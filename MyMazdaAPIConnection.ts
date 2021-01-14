@@ -257,15 +257,15 @@ export default class MyMazdaAPIConnection {
         return val.substring(4, 20);
     }
 
-    private getTemporarySignKeyFromAppCode(appCode: string): string {
-        let val = CryptoUtils.md5(CryptoUtils.md5(appCode + APP_PACKAGE_ID).toUpperCase() + SIGNATURE_MD5).toLowerCase();
+    private getTemporarySignKeyFromAppCode(): string {
+        let val = CryptoUtils.md5(CryptoUtils.md5(this.appCode + APP_PACKAGE_ID).toUpperCase() + SIGNATURE_MD5).toLowerCase();
         return val.substring(20, 32) + val.substring(0, 10) + val.substring(4, 6);
     }
 
     private getSignFromTimestamp(timestamp: string): string {
         if (typeof timestamp !== "string" || timestamp === "") return "";
         let timestampExtended = (timestamp + timestamp.substring(6) + timestamp.substring(3)).toUpperCase();
-        let temporarySignKey = this.getTemporarySignKeyFromAppCode(this.appCode);
+        let temporarySignKey = this.getTemporarySignKeyFromAppCode();
         return this.getPayloadSign(timestampExtended, temporarySignKey);
     }
 
