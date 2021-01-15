@@ -339,6 +339,11 @@ export default class MyMazdaAPIConnection {
                 await this.login();
 
                 return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
+            } else if (typeof err.message === "string" && err.message.includes("LOGIN_ERROR")) {
+                logger.debug("Login failed for an unknown reason. Trying again.");
+                await this.login();
+
+                return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
             } else {
                 throw err;
             }
@@ -352,6 +357,9 @@ export default class MyMazdaAPIConnection {
     }
 
     private async ensureTokenIsValid() {
+        if (typeof this.accessToken === "undefined" || this.accessToken.length === 0 || typeof this.accessTokenExpirationTs === "undefined") logger.debug("No access token present. Logging in.");
+        if (typeof this.accessTokenExpirationTs !== "undefined" && this.accessTokenExpirationTs <= (new Date().getTime() / 1000)) logger.debug("Access token is expired. Fetching a new one.");
+
         if (typeof this.accessToken === "undefined" || this.accessToken.length === 0 || typeof this.accessTokenExpirationTs === "undefined" || this.accessTokenExpirationTs <= (new Date().getTime() / 1000)) {
             await this.login();
         }
@@ -414,9 +422,21 @@ export default class MyMazdaAPIConnection {
             throwHttpErrors: false
         });
 
-        if (loginResponse.body.status === "INVALID_CREDENTIAL") throw new Error("Invalid email or password");
-        if (loginResponse.body.status === "USER_LOCKED") throw new Error("Account has been locked");
-        if (loginResponse.body.status !== "OK") throw new Error("Login failed");
+        if (loginResponse.body.status === "INVALID_CREDENTIAL") {
+            logger.debug("Login failed due to invalid email or password");
+            throw new Error("Invalid email or password");
+        }
+
+        if (loginResponse.body.status === "USER_LOCKED") {
+            logger.debug("Login failed to account being locked");
+            throw new Error("Account has been locked");
+        }
+
+        if (loginResponse.body.status !== "OK") {
+            let errStr = "Login failed" + (("status" in loginResponse.body) ? (": " + loginResponse.body.status) : "");
+            logger.debug(errStr);
+            throw new Error("LOGIN_ERROR " + errStr);
+        }
 
         logger.debug(`Successfully logged in as ${this.email}`);
 
