@@ -93,17 +93,24 @@ export default class MyMazdaAPIClient {
     }
 
     async getVehicles(): Promise<Vehicle[]> {
-        let vecBaseInfos = await this.controller.getVecBaseInfos();
+        let vecBaseInfosResponse = await this.controller.getVecBaseInfos();
 
         let vehicles: Vehicle[] = [];
-        for (let vecBaseInfo of vecBaseInfos.vecBaseInfos) {
-            let otherVehInfo: OtherVehicleInformation = JSON.parse(vecBaseInfo.Vehicle.vehicleInformation);
 
-            let nickname = await this.controller.getNickName(vecBaseInfo.vin);
+        for (let i = 0; i < vecBaseInfosResponse.vecBaseInfos.length; i++) {
+            let currentVecBaseInfo = vecBaseInfosResponse.vecBaseInfos[i];
+            let currentVehicleFlags = vecBaseInfosResponse.vehicleFlags[i];
+
+            // Ignore vehicles which are not enrolled in Mazda Connected Services
+            if (currentVehicleFlags.vinRegistStatus !== 3) continue;
+
+            let otherVehInfo: OtherVehicleInformation = JSON.parse(currentVecBaseInfo.Vehicle.vehicleInformation);
+
+            let nickname = await this.controller.getNickName(currentVecBaseInfo.vin);
 
             let vehicle: Vehicle = {
-                vin: vecBaseInfo.vin,
-                id: vecBaseInfo.Vehicle.CvInformation.internalVin,
+                vin: currentVecBaseInfo.vin,
+                id: currentVecBaseInfo.Vehicle.CvInformation.internalVin,
                 nickname: nickname,
                 carlineCode: otherVehInfo.OtherInformation.carlineCode,
                 carlineName: otherVehInfo.OtherInformation.carlineName,
