@@ -8,7 +8,7 @@ There is also a Python version of this library called [pymazda](https://github.c
 
 # Installation
 
-To install the latest release from npm, run `npm install node-mazda`.
+To install the latest release from npm, run `npm install node-mymazda`.
 
 # Quick Start
 
