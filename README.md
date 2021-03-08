@@ -178,7 +178,7 @@ None
 ## Stop Engine
 
 ```javascript
-await client.stop_engine(vehicleId)
+await client.stopEngine(vehicleId)
 ```
 
 Stops the engine. I believe this only works if the engine was started remotely (using Mazda Connected Services).
