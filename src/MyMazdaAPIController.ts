@@ -124,33 +124,9 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
         },
         UsbPositionAccuracy: number,
         Pw: {
-            /**
-             * Rear right window state.
-             * 
-             * 0 = Closed
-             * 1 = Open
-             */
             PwPosRr: 0 | 1,
-            /**
-             * Driver window state.
-             * 
-             * 0 = Closed
-             * 1 = Open
-             */
             PwPosDrv: 0 | 1,
-            /**
-             * Passenger window state.
-             * 
-             * 0 = Closed
-             * 1 = Open
-             */
             PwPosPsngr: 0 | 1,
-            /**
-             * Rear left window state.
-             * 
-             * 0 = Closed
-             * 1 = Open
-             */
             PwPosRl: 0 | 1
         },
         PositionInfo: {
@@ -340,21 +316,6 @@ export default class MyMazdaAPIController {
         });
     }
 
-    /**
-     * Get URLs for resources related to a vehicle.
-     *
-     * @function
-     * @param {string} trim - Vehicle trim
-     * @param {string | number} year - Vehicle model year
-     * @param {string} vin - VIN (vehicle identification number)
-     * @param {string} model - 3-character model code
-     * @param {string} mdlCode - extended model code
-     * @return {Promise<object>} An object containing URLs to resources related to the vehicle
-     *
-     * @example
-     *
-     *     await getBaseContent("SE", "2021", "3MXXXXXXXXXXXXXXX", "C30", "C30  SE XA")
-     */
     async getBaseContent(trim: string, year: string | number, vin: string, model: string, mdlCode: string): Promise<object> {
         return await this.connection.apiRequest<object>(true, true, {
             url: "content/getBaseContent/v4",

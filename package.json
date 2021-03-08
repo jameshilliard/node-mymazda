@@ -1,14 +1,14 @@
 {
-  "name": "mymazda2",
+  "name": "node-mymazda",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "dist/index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "prepare": "tsc",
     "start": "ts-node test.ts"
   },
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "devDependencies": {
     "@types/tunnel": "0.0.1",
     "ts-node": "^9.0.0",
@@ -18,5 +18,6 @@
     "got": "^11.8.0",
     "log4js": "^6.3.0",
     "tunnel": "0.0.6"
-  }
+  },
+  "types": "dist/index.d.ts"
 }
