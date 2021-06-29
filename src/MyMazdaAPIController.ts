@@ -1,4 +1,5 @@
 import MyMazdaAPIConnection from "./MyMazdaAPIConnection";
+import CryptoUtils from "./CryptoUtils";
 import type { RegionCode } from "./MyMazdaAPIConnection";
 
 interface APIBaseResponse {
@@ -36,6 +37,12 @@ interface GetNickNameAPIResponse extends APIBaseResponse {
 
 interface UpdateNickNameAPIResponse extends APIBaseResponse {
     message: string
+}
+
+interface SendPOIAPIResponse extends APIBaseResponse {
+    AppRequestNo: string,
+    cvMessage: string,
+    cvResultCode: string
 }
 
 interface GetVecBaseInfoAPIResponse extends APIBaseResponse {
@@ -474,5 +481,47 @@ export default class MyMazdaAPIController {
         });
 
         if (response.resultCode !== "200S00") throw new Error("Failed to update vehicle nickname");
+    }
+
+    async sendPOI(internalVin: number, latitude: number, longitude: number, name: string) {
+        // Calculate a POI ID that is unique to the name and location
+        let poiId = CryptoUtils.sha256(name + latitude + longitude).substring(0, 10);
+
+        let response = await this.connection.apiRequest<SendPOIAPIResponse>(true, true, {
+            url: "remoteServices/sendPOI/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin,
+                "placemarkinfos": [
+                    {
+                        "Altitude": 0,
+                        "Latitude": Math.abs(latitude),
+                        "LatitudeFlag": latitude >= 0 ? 0 : 1,
+                        "Longitude": Math.abs(longitude),
+                        "LongitudeFlag": longitude < 0 ? 0 : 1,
+                        "Name": name,
+                        "OtherInformation": "{}",
+                        "PoiId": poiId,
+                        "source": "google"
+                    }
+                ]
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to send POI");
+    }
+
+    async chargeStart(internalVin: number) {
+        let response = await this.connection.apiRequest<APIBaseResponse>(true, true, {
+            url: "remoteServices/chargeStart/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to start charging");
     }
 }

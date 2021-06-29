@@ -200,4 +200,12 @@ export default class MyMazdaAPIClient {
     async stopEngine(vehicleId: number): Promise<void> {
         await this.controller.engineStop(vehicleId);
     }
+
+    async sendPOI(vehicleId: number, latitude: number, longitude: number, name: string): Promise<void> {
+        await this.controller.sendPOI(vehicleId, latitude, longitude, name);
+    }
+
+    async startCharging(vehicleId: number) {
+        await this.controller.chargeStart(vehicleId);
+    }
 }
