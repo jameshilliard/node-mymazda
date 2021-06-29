@@ -17,8 +17,7 @@
   },
   "dependencies": {
     "got": "^11.8.0",
-    "log4js": "^6.3.0",
-    "tunnel": "0.0.6"
+    "log4js": "^6.3.0"
   },
   "types": "dist/index.d.ts"
 }
