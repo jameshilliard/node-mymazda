@@ -225,21 +225,14 @@ export default class MyMazdaAPIConnection {
                             throw new Error("ACCESS_TOKEN_EXPIRED_ERROR: Access token expired");
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 900500) {
                             throw new Error("RATE_LIMITING_ERROR: Rate limited; please wait and try again")
+                        } else if (isErrorEncryptedAPIResponse(response.body) && "error" in response.body) {
+                            throw new Error("Request failed: " + response.body.error);
                         } else {
-                            throw new Error("Request failed");
+                            throw new Error("Request failed due to an unknown error");
                         }
                     }
                 ]
             },
-            /*agent: {
-                //@ts-ignore
-                https: tunnel.httpsOverHttp({
-                    proxy: {
-                        host: '192.168.1.100',
-                        port: 8888
-                    }
-                })
-            }*/
         });
     }
 
