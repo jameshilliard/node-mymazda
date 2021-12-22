@@ -524,4 +524,17 @@ export default class MyMazdaAPIController {
 
         if (response.resultCode !== "200S00") throw new Error("Failed to start charging");
     }
+
+    async chargeStop(internalVin: number) {
+        let response = await this.connection.apiRequest<APIBaseResponse>(true, true, {
+            url: "remoteServices/chargeStop/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to stop charging");
+    }
 }

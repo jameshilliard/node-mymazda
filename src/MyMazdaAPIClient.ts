@@ -208,4 +208,8 @@ export default class MyMazdaAPIClient {
     async startCharging(vehicleId: number) {
         await this.controller.chargeStart(vehicleId);
     }
+
+    async stopCharging(vehicleId: number) {
+        await this.controller.chargeStop(vehicleId);
+    }
 }
