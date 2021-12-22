@@ -137,7 +137,7 @@ export default class MyMazdaAPIClient {
         let remoteInfo = vehicleStatusResponse.remoteInfos[0];
 
         let vehicleStatus: VehicleStatus = {
-            lastUpdatedTimestamp: remoteInfo.OccurrenceDate,
+            lastUpdatedTimestamp: alertInfo.OccurrenceDate,
             latitude: remoteInfo.PositionInfo.Latitude * (remoteInfo.PositionInfo.LatitudeFlag === 1 ? -1 : 1),
             longitude: remoteInfo.PositionInfo.Longitude * (remoteInfo.PositionInfo.LongitudeFlag === 0 ? -1 : 1),
             positionTimestamp: remoteInfo.PositionInfo.AcquisitionDatetime,
