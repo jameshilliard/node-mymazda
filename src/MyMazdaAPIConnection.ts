@@ -2,6 +2,7 @@ import got, { Got, OptionsOfJSONResponseBody } from "got";
 import log4js from "log4js";
 
 import CryptoUtils from "./CryptoUtils";
+import SensorDataBuilder from "./sensordata/SensorDataBuilder";
 
 export type RegionCode = "MNAO" | "MME" | "MJO";
 
@@ -124,7 +125,7 @@ function searchParamsToString(searchParams: Record<string, string | boolean | nu
 function isURLSearchParams(obj: object): obj is URLSearchParams {
     return obj instanceof URLSearchParams;
 }
-
+	
 function sleep(ms: number) {
     return new Promise(resolve => setTimeout(resolve, ms));
 }
@@ -145,6 +146,8 @@ export default class MyMazdaAPIConnection {
     private accessToken?: string;
     private accessTokenExpirationTs?: number;
 
+    private sensorDataBuilder: SensorDataBuilder;
+
     constructor(email: string, password: string, region: RegionCode) {
         this.email = email;
         this.password = password;
@@ -161,6 +164,8 @@ export default class MyMazdaAPIConnection {
         this.baseAPIDeviceID = CryptoUtils.generateUuidFromSeed(email);
         this.usherAPIDeviceID = CryptoUtils.generateUsherDeviceIDFromSeed(email);
 
+        this.sensorDataBuilder = new SensorDataBuilder();
+
         this.gotClient = got.extend({
             prefixUrl: this.baseUrl,
             headers: {
@@ -170,10 +175,10 @@ export default class MyMazdaAPIConnection {
                 "user-agent": USER_AGENT_BASE_API,
                 "app-version": APP_VERSION,
                 "app-unique-id": APP_PACKAGE_ID,
-                "access-token": "",
-                "X-acf-sensor-data": ""
+                "access-token": ""
             },
             responseType: "json",
+            timeout: 10000,
             hooks: {
                 init: [
                     options => {
@@ -192,6 +197,7 @@ export default class MyMazdaAPIConnection {
 
                         options.headers["req-id"] = `req_${timestamp}`;
                         options.headers["timestamp"] = timestamp;
+                        options.headers["X-acf-sensor-data"] = this.sensorDataBuilder.generateSensorData();
 
                         if (options.url.href.includes("checkVersion")) {
                             options.headers["sign"] = this.getSignFromTimestamp(timestamp);
