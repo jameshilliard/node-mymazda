@@ -15,6 +15,7 @@ interface Vehicle {
     interiorColorName: string,
     exteriorColorCode: string,
     exteriorColorName: string,
+    isElectric: boolean
 }
 
 interface OtherVehicleInformation {
@@ -85,6 +86,26 @@ interface VehicleStatus {
     }
 }
 
+interface EVVehicleStatus {
+    chargeInfo: {
+        lastUpdatedTimestamp: string,
+        batteryLevelPercentage: number,
+        drivingRangeKm: number,
+        pluggedIn: boolean,
+        charging: boolean,
+        basicChargeTimeMinutes: number,
+        quickChargeTimeMinutes: number,
+        batteryHeaterAuto: boolean,
+        batteryHeaterOn: boolean
+    },
+    hvacInfo: {
+        hvacOn: boolean,
+        frontDefroster: boolean,
+        rearDefroster: boolean,
+        interiorTemperatureCelsius: number
+    }
+}
+
 export default class MyMazdaAPIClient {
     private controller: MyMazdaAPIController
 
@@ -122,6 +143,7 @@ export default class MyMazdaAPIClient {
                 interiorColorName: otherVehInfo.OtherInformation.interiorColorName,
                 exteriorColorCode: otherVehInfo.OtherInformation.exteriorColorCode,
                 exteriorColorName: otherVehInfo.OtherInformation.exteriorColorName,
+                isElectric: currentVecBaseInfo.econnectType === 1
             };
 
             vehicles.push(vehicle);
@@ -177,6 +199,37 @@ export default class MyMazdaAPIClient {
         return vehicleStatus;
     }
 
+    async getEVVehicleStatus(vehicleId: number): Promise<EVVehicleStatus> {
+        let evVehicleStatusResponse = await this.controller.getEVVehicleStatus(vehicleId);
+
+        let resultData = evVehicleStatusResponse.resultData[0];
+        let vehicleInfo = resultData.PlusBInformation.VehicleInfo;
+        let chargeInfo = vehicleInfo.ChargeInfo;
+        let hvacInfo = vehicleInfo.RemoteHvacInfo;
+
+        let evVehicleStatus: EVVehicleStatus = {
+            chargeInfo: {
+                lastUpdatedTimestamp: resultData.OccurrenceDate,
+                batteryLevelPercentage: chargeInfo.SmaphSOC,
+                drivingRangeKm: chargeInfo.SmaphRemDrvDistKm,
+                pluggedIn: chargeInfo.ChargerConnectorFitting === 1,
+                charging: chargeInfo.ChargeStatusSub === 6,
+                basicChargeTimeMinutes: chargeInfo.MaxChargeMinuteAC,
+                quickChargeTimeMinutes: chargeInfo.MaxChargeMinuteQBC,
+                batteryHeaterAuto: chargeInfo.CstmzStatBatHeatAutoSW === 1,
+                batteryHeaterOn: chargeInfo.BatteryHeaterON === 1
+            },
+            hvacInfo: {
+                hvacOn: hvacInfo.HVAC === 1,
+                frontDefroster: hvacInfo.FrontDefroster === 1,
+                rearDefroster: hvacInfo.RearDefogger === 1,
+                interiorTemperatureCelsius: hvacInfo.InCarTeDC
+            }
+        }
+
+        return evVehicleStatus;
+    }
+
     async turnHazardLightsOn(vehicleId: number): Promise<void> {
         await this.controller.lightOn(vehicleId);
     }
@@ -211,5 +264,34 @@ export default class MyMazdaAPIClient {
 
     async stopCharging(vehicleId: number) {
         await this.controller.chargeStop(vehicleId);
+    }
+
+    async getHVACSetting(vehicleId: number) {
+        let response = await this.controller.getHVACSetting(vehicleId);
+
+        let hvacSettings = response.hvacSettings;
+
+        return {
+            temperature: hvacSettings.Temperature,
+            temperatureUnit: hvacSettings.TemperatureType === 1 ? "C" : "F",
+            frontDefroster: hvacSettings.FrontDefroster === 1,
+            rearDefroster: hvacSettings.RearDefogger === 1
+        };
+    }
+
+    async setHVACSetting(vehicleId: number, temperature: number, temperatureUnit: "C" | "F", frontDefroster: boolean, rearDefroster: boolean) {
+        await this.controller.setHVACSetting(vehicleId, temperature, temperatureUnit, frontDefroster, rearDefroster);
+    }
+
+    async turnOnHVAC(vehicleId: number) {
+        await this.controller.hvacOn(vehicleId);
+    }
+
+    async turnOffHVAC(vehicleId: number) {
+        await this.controller.hvacOff(vehicleId);
+    }
+
+    async refreshVehicleStatus(vehicleId: number) {
+        await this.controller.refreshVehicleStatus(vehicleId);
     }
 }

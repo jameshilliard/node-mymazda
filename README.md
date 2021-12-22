@@ -157,6 +157,44 @@ Get information about the current status of the vehicle. In my experience, this 
 }
 ```
 
+## Get EV vehicle status
+
+```javascript
+await client.getEVVehicleStatus(vehicleId)
+```
+
+Get additional status information which is specific to electric vehicles. This method should only be called for electric vehicles. To determine if the vehicle is electric, use the `isElectric` attribute from the `getVehicles()` response.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+```jsonc
+{
+    "chargeInfo": {
+        "lastUpdatedTimestamp": "20210807083956",
+        "batteryLevelPercentage": 10,
+        "drivingRangeKm": 218,
+        "pluggedIn": false,
+        "charging": true,
+        "basicChargeTimeMinutes": 3, // Estimated time in minutes to fully charge using AC charging
+        "quickChargeTimeMinutes": 0, // Estimated time in minutes to fully charge using DC charging
+        "batteryHeaterAuto": true, // Current battery heater mode (true = auto, false = off)
+        "batteryHeaterOn": true // Whether the battery heater is currently running
+    },
+    "hvacInfo": {
+        "hvacOn": true,
+        "frontDefroster": false,
+        "rearDefroster": false,
+        "interiorTemperatureCelsius": 15.1 // Current interior temperature of the car (actual temperature, not the HVAC setting)
+    }
+}
+```
+
 ## Start Engine
 
 ```javascript
@@ -254,6 +292,164 @@ await client.turnHazardLightsOff(vehicleId)
 ```
 
 Turns off the vehicle hazard lights.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+None
+
+## Send POI
+
+```javascript
+await client.sendPOI(vehicleId, latitude, longitude, name)
+```
+
+Send a GPS location to the vehicle's navigation. Requires a navigation SD card in the vehicle.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+| `latitude` | Latitude of the POI location |
+| `longitude` | Longitude of the POI location|
+| `name` | A friendly name for the location (e.g. "Work") |
+
+### Return value
+
+None
+
+## Start Charging
+
+```javascript
+await client.startCharging(vehicleId)
+```
+
+Starts charging the battery (only for electric vehicles).
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+None
+
+## Stop Charging
+
+```javascript
+await client.stopCharging(vehicleId)
+```
+
+Stops charging the battery (only for electric vehicles).
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+None
+
+## Get HVAC Setting
+
+```javascript
+await client.getHVACSetting(vehicleId)
+```
+
+Get the current settings for the vehicle's HVAC system. Only for electric vehicles.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+```jsonc
+{
+    "temperature": 20, // Current target temperature (NOT the current interior temperature reading)
+    "temperatureUnit": "C",
+    "frontDefroster": true,
+    "rearDefroster": false
+}
+```
+
+## Set HVAC Setting
+
+```javascript
+await client.setHVACSetting(vehicleId, temperature, temperatureUnit, frontDefroster, rearDefroster)
+```
+
+Set the HVAC settings for the vehicle's HVAC system. Only for electric vehicles.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+| `temperature` | Desired target temperature |
+| `temperatureUnit` | Temperature unit - `"F"` or `"C"` |
+| `frontDefroster` | Whether to use the front defroster - `true` or `false` |
+| `rearDefroster` | Whether to use the rear defroster - `true` or `false` |
+
+### Return value
+
+None
+
+## Turn On HVAC
+
+```javascript
+await client.turnOnHVAC(vehicleId)
+```
+
+Turn on the vehicle's HVAC system. Only for electric vehicles.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+None
+
+## Turn Off HVAC
+
+```javascript
+await client.turnOffHVAC(vehicleId)
+```
+
+Turn off the vehicle's HVAC system. Only for electric vehicles.
+
+### Parameters
+
+| Parameter | Description |
+| --------- | ----------- |
+| `vehicleId` | Vehicle ID (obtained from `getVehicles()`) |
+
+### Return value
+
+None
+
+## Refresh Vehicle Status
+
+```javascript
+await client.refreshVehicleStatus(vehicleId)
+```
+
+Request a new status update from the vehicle. Only for electric vehicles.
 
 ### Parameters
 

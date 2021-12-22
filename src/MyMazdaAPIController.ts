@@ -235,6 +235,65 @@ interface VehicleStatusAPIResponse extends APIBaseResponse {
     }[]
 }
 
+interface EVVehicleStatusAPIResponse extends APIBaseResponse {
+    resultData: {
+        NId: string,
+        InformationDatetime: string,
+        PlusBInformation: {
+            VehicleInfo: {
+                ChargeInfo: {
+                    SmaphRemDrvDistKm: number,
+                    SmaphSOC: number,
+                    CstmzStatBatHeatAutoSW: number,
+                    SmaphRemDrvDistMile: number,
+                    ACChargeStatus: number,
+                    ChargeStatusSub: number,
+                    ChargerConnectorFitting: number,
+                    MaxChargeMinuteAC: number,
+                    BatteryHeaterON: number,
+                    DCChargeStatus: number,
+                    MaxChargeMinuteQBC: number
+                },
+                RemoteHvacInfo: {
+                    HVAC: number,
+                    RearDefogger: number,
+                    InCarTeDC: number,
+                    InCarTeDF: number,
+                    FrontDefroster: number
+                }
+            }
+        },
+        NotificationCategory: number,
+        SId: string,
+        OccurrenceTime: string,
+        DcmNumber: string,
+        BsId: string,
+        DcmDormantDatetime: string,
+        IgInformation: {
+            VehicleInfo: {
+                ChargeInfo: {
+                    ChargeScheduleStatus: number,
+                    LastUpdatedTimeForScheduledChargeTime: string
+                }
+            }
+        },
+        OccurrenceDate: string,
+        PositionInfo: {
+            AcquisitionDatetime: string,
+            Latitude: number,
+            Longitude: number,
+            DcmPositionAccuracy: {
+                Gradient: number,
+                MinorAxisError: number,
+                AcquisitionState: number,
+                MajorAxisError: number
+            }
+        },
+        PositionInfoCategory: number,
+        TransmissionFactor: string
+    }[]
+}
+
 interface HealthReportAPIResponse extends APIBaseResponse {
     remoteInfos: {
         WngRearFogLamp: number,
@@ -261,6 +320,15 @@ interface HealthReportAPIResponse extends APIBaseResponse {
         OdoDispValueMile: number,
         WngBackLamp: number
     }[]
+}
+
+interface GetHVACSettingAPIResponse extends APIBaseResponse {
+    hvacSettings: {
+        TemperatureType: number,
+        Temperature: number,
+        RearDefogger: number,
+        FrontDefroster: number
+    }
 }
 
 export default class MyMazdaAPIController {
@@ -350,6 +418,24 @@ export default class MyMazdaAPIController {
         });
 
         if (response.resultCode !== "200S00") throw new Error("Failed to get vehicle status");
+
+        return response;
+    }
+
+    async getEVVehicleStatus(internalVin: number) {
+        let response = await this.connection.apiRequest<EVVehicleStatusAPIResponse>(true, true, {
+            url: "remoteServices/getEVVehicleStatus/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin,
+                "limit": 1,
+                "offset": 0,
+                "vecinfotype": "0"
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to get EV vehicle status");
 
         return response;
     }
@@ -536,5 +622,78 @@ export default class MyMazdaAPIController {
         });
 
         if (response.resultCode !== "200S00") throw new Error("Failed to stop charging");
+    }
+
+    async getHVACSetting(internalVin: number) {
+        let response = await this.connection.apiRequest<GetHVACSettingAPIResponse>(true, true, {
+            url: "remoteServices/getHVACSetting/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to get HVAC setting");
+
+        return response;
+    }
+
+    async setHVACSetting(internalVin: number, temperature: number, temperatureUnit: "C" | "F", frontDefroster: boolean, rearDefroster: boolean) {
+        let response = await this.connection.apiRequest<GetHVACSettingAPIResponse>(true, true, {
+            url: "remoteServices/updateHVACSetting/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin,
+                "hvacsettings": {
+                    "FrontDefroster": frontDefroster ? 1 : 0,
+                    "RearDefogger": rearDefroster ? 1 : 0,
+                    "Temperature": temperature,
+                    "TemperatureType": temperatureUnit.toLowerCase() === "c" ? 1 : 2
+                }
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to set HVAC setting");
+    }
+
+    async hvacOn(internalVin: number) {
+        let response = await this.connection.apiRequest<APIBaseResponse>(true, true, {
+            url: "remoteServices/hvacOn/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to turn HVAC on");
+    }
+
+    async hvacOff(internalVin: number) {
+        let response = await this.connection.apiRequest<APIBaseResponse>(true, true, {
+            url: "remoteServices/hvacOff/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to turn HVAC off");
+    }
+
+    async refreshVehicleStatus(internalVin: number) {
+        let response = await this.connection.apiRequest<APIBaseResponse>(true, true, {
+            url: "remoteServices/activeRealTimeVehicleStatus/v4",
+            method: "POST",
+            json: {
+                "internaluserid": "__INTERNAL_ID__",
+                "internalvin": internalVin
+            }
+        });
+
+        if (response.resultCode !== "200S00") throw new Error("Failed to refresh vehicle status");
     }
 }
