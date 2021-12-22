@@ -57,6 +57,7 @@ interface SuccessfulEncryptedAPIResponse extends BaseEncryptedAPIResponse {
 interface ErrorEncryptedAPIResponse extends BaseEncryptedAPIResponse {
     /* errorCode will be non-zero for error responses */
     errorCode: number,
+    extraCode?: string,
     error: string,
     state: "F"
 }
@@ -122,6 +123,10 @@ function searchParamsToString(searchParams: Record<string, string | boolean | nu
 
 function isURLSearchParams(obj: object): obj is URLSearchParams {
     return obj instanceof URLSearchParams;
+}
+
+function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
 }
 
 export default class MyMazdaAPIConnection {
@@ -223,6 +228,10 @@ export default class MyMazdaAPIConnection {
                             throw new Error("API_ENCRYPTION_ERROR: Server rejected encrypted request")
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 600002) {
                             throw new Error("ACCESS_TOKEN_EXPIRED_ERROR: Access token expired");
+                        } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 920000 && response.body.extraCode === "400S01") {
+                            throw new Error("REQUEST_IN_PROGRESS_ERROR: Request already in progress, please wait and try again");
+                        } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 920000 && response.body.extraCode === "400S11") {
+                            throw new Error("The engine can only be remotely started 2 consecutive times. Please drive the vehicle to reset the counter.");
                         } else if (isErrorEncryptedAPIResponse(response.body) && response.body.errorCode === 900500) {
                             throw new Error("RATE_LIMITING_ERROR: Rate limited; please wait and try again")
                         } else if (isErrorEncryptedAPIResponse(response.body) && "error" in response.body) {
@@ -335,6 +344,11 @@ export default class MyMazdaAPIConnection {
             } else if (typeof err.message === "string" && err.message.includes("LOGIN_ERROR")) {
                 logger.debug("Login failed for an unknown reason. Trying again.");
                 await this.login();
+
+                return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
+            } else if (typeof err.message === "string" && err.message.includes("REQUEST_IN_PROGRESS_ERROR")) {
+                logger.debug("Request failed because another request was already in progress. Waiting 30 seconds and trying again.");
+                await sleep(30000);
 
                 return await this.apiRequestRetry(needsKeys, needsAuth, gotOptions, numRetries + 1);
             } else {
