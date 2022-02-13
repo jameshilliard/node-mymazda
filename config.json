@@ -1,0 +1,27 @@
+{
+    "iv": "0102030405060708",
+    "signatureMd5": "C383D8C4D279B78130AD52DC71D95CAA",
+    "appOs": "Android",
+    "appPackageId": "com.interrait.mymazda",
+    "appVersion": "8.1.1",
+    "userAgentBaseApi": "MyMazda-Android/8.1.1",
+    "userAgentUsherApi": "MyMazda/8.1.1 (Google Pixel 3a; Android 11)",
+    "usherSdkVersion": "11.2.0400.001",
+    "regionConfig": {
+        "MNAO": {
+            "appCode": "202007270941270111799",
+            "baseUrl": "https://0cxo7m58.mazda.com/prod/",
+            "usherUrl": "https://ptznwbh8.mazda.com/appapi/v1/"
+        },
+        "MME": {
+            "appCode": "202008100250281064816",
+            "baseUrl": "https://e9stj7g7.mazda.com/prod/",
+            "usherUrl": "https://rz97suam.mazda.com/appapi/v1/"
+        },
+        "MJO": {
+            "appCode": "202009170613074283422",
+            "baseUrl": "https://wcs9p6wj.mazda.com/prod/",
+            "usherUrl": "https://c5ulfwxr.mazda.com/appapi/v1/"
+        }
+    }
+}
